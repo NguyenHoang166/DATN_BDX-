@@ -1458,17 +1458,25 @@ const AdminPage = ({ onLogout }) => {
           </div>
         )}
 
-        {/* Popup Thống Kê */}
-        {showStatisticsPopup && (
+       {/* Popup Thống Kê */}
+       {showStatisticsPopup && (
           <div className="admin-page-statistics-popup-overlay">
             <div className="admin-page-statistics-popup">
               <div className="admin-page-statistics-header">
                 <h3>Thống Kê</h3>
                 <div className="admin-page-form-actions">
-                  <label>Ngày bắt đầu:</label>
-                  <input type="date" defaultValue="2025-03-19" className="admin-page-date-input" />
-                  <label>Ngày kết thúc:</label>
-                  <input type="date" defaultValue="2025-03-19" className="admin-page-date-input" />
+                  <label>bắt đầu:</label>
+                  <input
+                    type="month" // Thay từ date thành month
+                    defaultValue="2025-03"
+                    className="admin-page-date-input"
+                  />
+                  <label>kết thúc:</label>
+                  <input
+                    type="month" // Thay từ date thành month
+                    defaultValue="2025-03"
+                    className="admin-page-date-input"
+                  />
                   <button className="admin-page-filter-button">Tìm kiếm</button>
                   <button className="admin-page-export-button">Xuất Excel</button>
                   <button className="admin-page-close-button" onClick={handleCloseStatisticsPopup}>
@@ -1529,5 +1537,4 @@ const AdminPage = ({ onLogout }) => {
     </div>
   );
 };
-
 export default AdminPage;

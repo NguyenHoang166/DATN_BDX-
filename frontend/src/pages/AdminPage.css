@@ -905,25 +905,30 @@
   display: flex;
   gap: 10px;
   justify-content: center;
+  align-items: center; /* Thêm để căn giữa theo chiều dọc */
+  padding: 10px 0; /* Thêm padding để tạo khoảng cách */
 }
 
+/* Submit Button */
 .admin-page .submit-button {
   padding: 8px 16px;
-  background-color: #28a745; /* Green as in the image */
+  background-color: #28a745; /* Màu xanh lá */
   color: #fff;
   border: none;
   border-radius: 5px;
   cursor: pointer;
   font-size: 16px;
+  transition: background-color 0.3s ease; /* Thêm hiệu ứng mượt mà */
 }
 
 .admin-page .submit-button:hover {
-  background-color: #218838;
+  background-color: #218838; /* Màu xanh đậm hơn khi hover */
 }
 
+/* Cancel Button */
 .admin-page .cancel-button {
   padding: 8px 16px;
-  background-color: #dc3545; /* Red as in the image */
+  background-color: #dc3545; /* Màu đỏ */
   color: #fff;
   border: none;
   border-radius: 5px;
@@ -932,44 +937,54 @@
   display: flex;
   align-items: center;
   gap: 5px;
+  transition: background-color 0.3s ease; /* Thêm hiệu ứng mượt mà */
 }
 
 .admin-page .cancel-button:hover {
-  background-color: #c82333;
+  background-color: #c82333; /* Màu đỏ đậm hơn khi hover */
 }
 
 .admin-page .cancel-icon {
   font-size: 14px;
+  line-height: 1; /* Đảm bảo biểu tượng căn đều với chữ */
 }
+
+/* Parking Lot Actions */
 .parking-lot-actions {
   display: flex;
   gap: 10px;
+  justify-content: center; /* Căn giữa các nút */
+  padding: 5px 0; /* Thêm padding nhẹ */
 }
 
+/* Edit Button */
 .edit-button {
-  background-color: #007bff;
+  background-color: #007bff; /* Màu xanh dương */
   color: white;
   border: none;
   padding: 5px 10px;
   border-radius: 5px;
   cursor: pointer;
   font-size: 14px;
+  transition: background-color 0.3s ease; /* Thêm hiệu ứng mượt mà */
 }
 
 .edit-button:hover {
-  background-color: #0056b3;
+  background-color: #0056b3; /* Màu xanh đậm hơn khi hover */
 }
 
+/* Delete Button */
 .delete-button {
-  background-color: #dc3545;
+  background-color: #dc3545; /* Màu đỏ */
   color: white;
   border: none;
   padding: 5px 10px;
   border-radius: 5px;
   cursor: pointer;
   font-size: 14px;
+  transition: background-color 0.3s ease; /* Thêm hiệu ứng mượt mà */
 }
 
 .delete-button:hover {
-  background-color: #b02a37;
+  background-color: #b02a37; /* Màu đỏ đậm hơn khi hover */
 }
