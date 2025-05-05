@@ -1,11 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react"; // Thêm useEffect
 import "./ParkingSelectionPage.css";
 import backgroundImage from "../assets/image.png";
 import parkingAImage from "../assets/imagebai1.jpg";
-import parkingBImage from "../assets/imagebai2.jpg";
-import parkingCImage from "../assets/imagebai3.jpg";
 import { QRCodeCanvas } from "qrcode.react";
-import emailjs from "emailjs-com"; // Import EmailJS
+import emailjs from "emailjs-com";
+import axios from 'axios'; // Thêm axios để gọi API server
 
 // Dữ liệu ảo: Danh sách bãi xe
 const parkingLots = [
@@ -15,32 +14,10 @@ const parkingLots = [
     capacity: "50 chỗ",
     price: "10,000 VNĐ/giờ",
     image: parkingAImage,
-    motorcyclePositions: ["A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8", "A9", "A10"],
-    carPositions: ["A11", "A12", "A13", "A14", "A15", "A16", "A17", "A18", "A19", "A20"],
-    truckPositions: ["A21", "A22", "A23", "A24", "A25", "A26", "A27", "A28", "A29", "A30"],
+    motorcyclePositions: ["A1", "A2"],
+    carPositions: ["A11", "A12"],
+    truckPositions: ["A21"],
     unitPrice: 10000,
-  },
-  {
-    id: 2,
-    name: "Bãi đậu Hòa Khánh",
-    capacity: "30 chỗ",
-    price: "15,000 VNĐ/giờ",
-    image: parkingBImage,
-    motorcyclePositions: ["A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8", "A9", "A10"],
-    carPositions: ["A11", "A12", "A13", "A14", "A15", "A16", "A17", "A18", "A19", "A20"],
-    truckPositions: ["A21", "A22", "A23", "A24", "A25", "A26", "A27", "A28", "A29", "A30"],
-    unitPrice: 15000,
-  },
-  {
-    id: 3,
-    name: "Bãi đậu Sơn Trà",
-    capacity: "40 chỗ",
-    price: "20,000 VNĐ/giờ",
-    image: parkingCImage,
-    motorcyclePositions: ["A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8", "A9", "A10"],
-    carPositions: ["A11", "A12", "A13", "A14", "A15", "A16", "A17", "A18", "A19", "A20"],
-    truckPositions: ["A21", "A22", "A23", "A24", "A25", "A26", "A27", "A28", "A29", "A30"],
-    unitPrice: 20000,
   },
 ];
 
@@ -84,15 +61,15 @@ const sendOrderDetailsEmail = (orderDetails) => {
     total: orderDetails.total.toLocaleString(),
     paymentMethod: orderDetails.paymentMethod,
     qrCode: orderDetails.qrCode,
-    to_email: orderDetails.customerInfo.email, // Email khách hàng
+    to_email: orderDetails.customerInfo.email,
   };
 
   emailjs
     .send(
-      "service_gn0x2u3", // Thay bằng Service ID của bạn
-      "template_27s5kyo", // Thay bằng Template ID của bạn
+      "service_gn0x2u3",
+      "template_27s5kyo",
       templateParams,
-      "m_sqSMomHJTVzrxlP" // Thay bằng User ID của bạn
+      "m_sqSMomHJTVzrxlP"
     )
     .then(
       (response) => {
@@ -129,7 +106,36 @@ export default function ParkingSelectionPage() {
     comment: "",
   });
   const [qrCode, setQrCode] = useState("");
-  const [orders, setOrders] = useState([]); // Dữ liệu ảo để lưu trữ đơn hàng
+  const [expires, setExpires] = useState(null); // Thêm state cho thời gian hết hạn
+  const [timeLeft, setTimeLeft] = useState(null); // Thêm state cho đồng hồ đếm ngược
+  const [orders, setOrders] = useState([]);
+
+  // Đồng hồ đếm ngược 15 phút
+  useEffect(() => {
+    if (expires) {
+      const interval = setInterval(() => {
+        const now = Date.now();
+        const timeRemaining = Math.max(0, Math.floor((expires - now) / 1000));
+        setTimeLeft(timeRemaining);
+
+        if (timeRemaining === 0) {
+          setQrCode(""); // Ẩn mã QR khi hết hạn
+          setExpires(null);
+          alert("Mã QR đã hết hạn!");
+          clearInterval(interval);
+        }
+      }, 1000);
+
+      return () => clearInterval(interval);
+    }
+  }, [expires]);
+
+  // Hàm định dạng thời gian phút:giây
+  const formatTime = (seconds) => {
+    const minutes = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${minutes}:${secs < 10 ? '0' : ''}${secs}`;
+  };
 
   // Lấy danh sách vị trí đỗ dựa trên loại xe
   const getAvailablePositions = () => {
@@ -210,6 +216,8 @@ export default function ParkingSelectionPage() {
     setStartDate("2025-03-19T07:00");
     setEndDate("2025-03-19T14:00");
     setQrCode("");
+    setExpires(null);
+    setTimeLeft(null);
   };
 
   // Mở modal đánh giá
@@ -283,7 +291,7 @@ export default function ParkingSelectionPage() {
   };
 
   // Xử lý xác nhận từ modal thông tin khách hàng
-  const handleFinalConfirmation = () => {
+  const handleFinalConfirmation = async () => {
     if (!customerInfo.name || !customerInfo.phone || !customerInfo.email || !customerInfo.licensePlate) {
       alert("Vui lòng điền đầy đủ thông tin khách hàng!");
       return;
@@ -293,60 +301,99 @@ export default function ParkingSelectionPage() {
       return;
     }
 
-    const newQrCode = generateRandomCode();
-    const newOrder = {
-      id: orders.length + 1,
-      customerInfo: { ...customerInfo },
-      parkingLot: selectedLotForBooking.name,
-      positions: selectedPositions,
-      vehicleType: vehicleTypes.find((type) => type.value === selectedVehicleType).label,
-      startDate: new Date(startDate).toLocaleString(),
-      endDate: new Date(endDate).toLocaleString(),
-      duration: calculateDuration(),
-      total: selectedLotForBooking.unitPrice * calculateDuration() * selectedPositions.length,
-      paymentMethod: paymentMethods.find((method) => method.value === selectedPaymentMethod).label,
-      qrCode: newQrCode,
+    // Tạo mã QR và gửi đến server
+    const transactionId = `TRANS_${Date.now()}`;
+    const qrData = {
+      transactionId,
+      expires: Date.now() + 900000, // 15 phút
     };
-    setOrders([...orders, newOrder]);
-    setQrCode(newQrCode);
 
-    if (selectedPaymentMethod === "momo") {
-      setShowCustomerInfoModal(false);
-      setShowMomoPaymentModal(true);
-    } else if (selectedPaymentMethod === "vnpay") {
-      setShowCustomerInfoModal(false);
-      setShowVNPayPaymentModal(true);
-    } else {
-      // Hiển thị modal chi tiết đơn hàng cho phương thức "Tiền mặt"
-      setShowCustomerInfoModal(false);
-      setShowOrderDetailsModal(true);
+    try {
+      const response = await axios.post('http://your-server-url/payment/complete', { transactionId });
+      const newQrCode = response.data.qrCode; // Nhận mã QR từ server
+      const newOrder = {
+        id: orders.length + 1,
+        customerInfo: { ...customerInfo },
+        parkingLot: selectedLotForBooking.name,
+        positions: selectedPositions,
+        vehicleType: vehicleTypes.find((type) => type.value === selectedVehicleType).label,
+        startDate: new Date(startDate).toLocaleString(),
+        endDate: new Date(endDate).toLocaleString(),
+        duration: calculateDuration(),
+        total: selectedLotForBooking.unitPrice * calculateDuration() * selectedPositions.length,
+        paymentMethod: paymentMethods.find((method) => method.value === selectedPaymentMethod).label,
+        qrCode: newQrCode,
+      };
+      setOrders([...orders, newOrder]);
+      setQrCode(newQrCode);
+      setExpires(qrData.expires);
 
-      // Gửi email
-      sendOrderDetailsEmail(newOrder);
-      alert(`Hóa đơn đã được gửi đến email: ${customerInfo.email}`);
+      if (selectedPaymentMethod === "momo") {
+        setShowCustomerInfoModal(false);
+        setShowMomoPaymentModal(true);
+      } else if (selectedPaymentMethod === "vnpay") {
+        setShowCustomerInfoModal(false);
+        setShowVNPayPaymentModal(true);
+      } else {
+        setShowCustomerInfoModal(false);
+        setShowOrderDetailsModal(true);
+        sendOrderDetailsEmail(newOrder);
+        alert(`Hóa đơn đã được gửi đến email: ${customerInfo.email}`);
+      }
+    } catch (error) {
+      alert("Lỗi khi tạo mã QR!");
+      console.error(error);
     }
   };
 
   // Xử lý khi xác nhận thanh toán Momo
-  const handleMomoPaymentConfirmation = () => {
-    const newOrder = orders[orders.length - 1]; // Lấy đơn hàng vừa tạo
-    setShowMomoPaymentModal(false);
-    setShowOrderDetailsModal(true);
+  const handleMomoPaymentConfirmation = async () => {
+    const newOrder = orders[orders.length - 1];
+    const transactionId = `TRANS_${Date.now()}`;
+    const qrData = {
+      transactionId,
+      expires: Date.now() + 900000,
+    };
 
-    // Gửi email
-    sendOrderDetailsEmail(newOrder);
-    alert(`Hóa đơn đã được gửi đến email: ${customerInfo.email}`);
+    try {
+      const response = await axios.post('http://your-server-url/payment/complete', { transactionId });
+      const newQrCode = response.data.qrCode;
+      newOrder.qrCode = newQrCode;
+      setQrCode(newQrCode);
+      setExpires(qrData.expires);
+      setShowMomoPaymentModal(false);
+      setShowOrderDetailsModal(true);
+      sendOrderDetailsEmail(newOrder);
+      alert(`Hóa đơn đã được gửi đến email: ${customerInfo.email}`);
+    } catch (error) {
+      alert("Lỗi khi tạo mã QR!");
+      console.error(error);
+    }
   };
 
   // Xử lý khi xác nhận thanh toán VNPay
-  const handleVNPayPaymentConfirmation = () => {
-    const newOrder = orders[orders.length - 1]; // Lấy đơn hàng vừa tạo
-    setShowVNPayPaymentModal(false);
-    setShowOrderDetailsModal(true);
+  const handleVNPayPaymentConfirmation = async () => {
+    const newOrder = orders[orders.length - 1];
+    const transactionId = `TRANS_${Date.now()}`;
+    const qrData = {
+      transactionId,
+      expires: Date.now() + 900000,
+    };
 
-    // Gửi email
-    sendOrderDetailsEmail(newOrder);
-    alert(`Hóa đơn đã được gửi đến email: ${customerInfo.email}`);
+    try {
+      const response = await axios.post('http://your-server-url/payment/complete', { transactionId });
+      const newQrCode = response.data.qrCode;
+      newOrder.qrCode = newQrCode;
+      setQrCode(newQrCode);
+      setExpires(qrData.expires);
+      setShowVNPayPaymentModal(false);
+      setShowOrderDetailsModal(true);
+      sendOrderDetailsEmail(newOrder);
+      alert(`Hóa đơn đã được gửi đến email: ${customerInfo.email}`);
+    } catch (error) {
+      alert("Lỗi khi tạo mã QR!");
+      console.error(error);
+    }
   };
 
   return (
@@ -838,6 +885,9 @@ export default function ParkingSelectionPage() {
                   <div className="qr-code-container">
                     <QRCodeCanvas value={qrCode} size={128} />
                     <p>Quét mã QR này để mở khóa cổng</p>
+                    {timeLeft !== null && (
+                      <p>Thời gian còn lại: {formatTime(timeLeft)}</p>
+                    )}
                   </div>
                 )}
               </div>

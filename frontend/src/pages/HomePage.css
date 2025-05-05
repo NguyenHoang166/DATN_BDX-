@@ -224,3 +224,11 @@ a {
   cursor: pointer;
   z-index: 2;
 }
+/* HomePage.css */
+
+/* Đảm bảo main-container chiếm toàn bộ chiều cao */
+.main-container {
+  min-height: 100vh; /* Chiều cao tối thiểu bằng chiều cao viewport */
+  display: flex;
+  flex-direction: column;
+}
